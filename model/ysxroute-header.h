@@ -354,6 +354,8 @@ public:
    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
    |          Reserved             |     Htime     |  Willingness  |
    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |    pos_x      |     pos_y     |     vel_x     |  vel_y        |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
    |   Link Code   |   Reserved    |       Link Message Size       |
    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
    |                  Neighbor Interface Address                   |
@@ -405,6 +407,10 @@ public:
     }
 
     uint8_t willingness; //!< The willingness of a node to carry and forward traffic for other nodes.
+    uint8_t pos_x;
+    uint8_t pos_y;
+    uint8_t vel_x;
+    uint8_t vel_y;
     std::vector<LinkMessage> linkMessages; //!< Link messages container.
 
     /**

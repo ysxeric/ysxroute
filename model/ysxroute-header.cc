@@ -31,7 +31,7 @@
 
 namespace ns3 {
 
-NS_LOG_COMPONENT_DEFINE ("OlsrHeader");
+NS_LOG_COMPONENT_DEFINE ("YSXRouteHeader");
 
 namespace ysxroute {
 
@@ -113,9 +113,9 @@ PacketHeader::~PacketHeader ()
 TypeId
 PacketHeader::GetTypeId (void)
 {
-  static TypeId tid = TypeId ("ns3::olsr::PacketHeader")
+  static TypeId tid = TypeId ("ns3::ysxroute::PacketHeader")
     .SetParent<Header> ()
-    .SetGroupName ("Olsr")
+    .SetGroupName ("Ysxroute")
     .AddConstructor<PacketHeader> ()
   ;
   return tid;
@@ -172,9 +172,9 @@ MessageHeader::~MessageHeader ()
 TypeId
 MessageHeader::GetTypeId (void)
 {
-  static TypeId tid = TypeId ("ns3::olsr::MessageHeader")
+  static TypeId tid = TypeId ("ns3::ysxroute::MessageHeader")
     .SetParent<Header> ()
-    .SetGroupName ("Olsr")
+    .SetGroupName ("ysxroute")
     .AddConstructor<MessageHeader> ()
   ;
   return tid;
@@ -335,6 +335,7 @@ uint32_t
 MessageHeader::Hello::GetSerializedSize (void) const
 {
   uint32_t size = 4;
+  size += 4;  // pos and vel
   for (std::vector<LinkMessage>::const_iterator iter = this->linkMessages.begin ();
        iter != this->linkMessages.end (); iter++)
     {
@@ -359,6 +360,11 @@ MessageHeader::Hello::Serialize (Buffer::Iterator start) const
   i.WriteU16 (0); // Reserved
   i.WriteU8 (this->hTime);
   i.WriteU8 (this->willingness);
+
+  i.WriteU8 (this->pos_x);
+  i.WriteU8 (this->pos_y);
+  i.WriteU8 (this->vel_x);
+  i.WriteU8 (this->vel_y);
 
   for (std::vector<LinkMessage>::const_iterator iter = this->linkMessages.begin ();
        iter != this->linkMessages.end (); iter++)
@@ -396,6 +402,13 @@ MessageHeader::Hello::Deserialize (Buffer::Iterator start, uint32_t messageSize)
   i.ReadNtohU16 (); // Reserved
   this->hTime = i.ReadU8 ();
   this->willingness = i.ReadU8 ();
+
+  helloSizeLeft -= 4;
+
+  this->pos_x = i.ReadU8 ();
+  this->pos_y = i.ReadU8 ();
+  this->vel_x = i.ReadU8 ();
+  this->vel_y = i.ReadU8 ();
 
   helloSizeLeft -= 4;
 
