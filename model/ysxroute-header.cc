@@ -335,7 +335,7 @@ uint32_t
 MessageHeader::Hello::GetSerializedSize (void) const
 {
   uint32_t size = 4;
-  size += 4;  // pos and vel
+  size += 8;  // pos and vel
   for (std::vector<LinkMessage>::const_iterator iter = this->linkMessages.begin ();
        iter != this->linkMessages.end (); iter++)
     {
@@ -361,10 +361,11 @@ MessageHeader::Hello::Serialize (Buffer::Iterator start) const
   i.WriteU8 (this->hTime);
   i.WriteU8 (this->willingness);
 
-  i.WriteU8 (this->pos_x);
-  i.WriteU8 (this->pos_y);
+  i.WriteU16 (this->pos_x);
+  i.WriteU16 (this->pos_y);
   i.WriteU8 (this->vel_x);
   i.WriteU8 (this->vel_y);
+  i.WriteU16 (0); // Reserved
 
   for (std::vector<LinkMessage>::const_iterator iter = this->linkMessages.begin ();
        iter != this->linkMessages.end (); iter++)
@@ -393,7 +394,7 @@ MessageHeader::Hello::Deserialize (Buffer::Iterator start, uint32_t messageSize)
 {
   Buffer::Iterator i = start;
 
-  NS_ASSERT (messageSize >= 4);
+  NS_ASSERT (messageSize >= 12);
 
   this->linkMessages.clear ();
 
@@ -405,11 +406,12 @@ MessageHeader::Hello::Deserialize (Buffer::Iterator start, uint32_t messageSize)
 
   helloSizeLeft -= 4;
 
-  this->pos_x = i.ReadU8 ();
-  this->pos_y = i.ReadU8 ();
+  this->pos_x = i.ReadU16 ();
+  this->pos_y = i.ReadU16 ();
+  helloSizeLeft -= 4;
   this->vel_x = i.ReadU8 ();
   this->vel_y = i.ReadU8 ();
-
+  i.ReadNtohU16 (); // Reserved
   helloSizeLeft -= 4;
 
   while (helloSizeLeft)
@@ -438,7 +440,7 @@ MessageHeader::Hello::Deserialize (Buffer::Iterator start, uint32_t messageSize)
 uint32_t
 MessageHeader::Tc::GetSerializedSize (void) const
 {
-  return 4 + this->neighborAddresses.size () * IPV4_ADDRESS_SIZE;
+  return 8 + this->neighborIP_Mob.size () * (3*IPV4_ADDRESS_SIZE);//8 is reserved
 }
 
 void
@@ -453,12 +455,21 @@ MessageHeader::Tc::Serialize (Buffer::Iterator start) const
   Buffer::Iterator i = start;
 
   i.WriteHtonU16 (this->ansn);
-  i.WriteHtonU16 (0); // Reserved
+  i.WriteHtonU16 (this->mpos_x);
+  i.WriteHtonU16 (this->mpos_y);
+  i.WriteU8 (this->mvel_x);
+  i.WriteU8 (this->mvel_y);
 
-  for (std::vector<Ipv4Address>::const_iterator iter = this->neighborAddresses.begin ();
-       iter != this->neighborAddresses.end (); iter++)
+  for (std::vector<NodeIP_Mob>::const_iterator iter = this->neighborIP_Mob.begin ();
+       iter != this->neighborIP_Mob.end (); iter++)
     {
-      i.WriteHtonU32 (iter->Get ());
+      i.WriteHtonU32 (iter->ipv4add.Get ());
+      i.WriteHtonU16 (iter->pos_x);
+      i.WriteHtonU16 (iter->pos_y);
+      i.WriteU8(iter->vel_x);
+      i.WriteU8(iter->vel_y);
+      i.WriteU8(iter->time_updated);
+      i.WriteU8 (0);// Reserved
     }
 }
 
@@ -467,18 +478,35 @@ MessageHeader::Tc::Deserialize (Buffer::Iterator start, uint32_t messageSize)
 {
   Buffer::Iterator i = start;
 
-  this->neighborAddresses.clear ();
-  NS_ASSERT (messageSize >= 4);
+//  this->neighborAddresses.clear ();
+  this->neighborIP_Mob.clear ();
+  NS_ASSERT (messageSize >= 8);
 
   this->ansn = i.ReadNtohU16 ();
-  i.ReadNtohU16 (); // Reserved
+  this->mpos_x=i.ReadNtohU16();
+  this->mpos_y=i.ReadNtohU16();
+  this->mvel_x=i.ReadU8();
+  this->mvel_y=i.ReadU8();
 
-  NS_ASSERT ((messageSize - 4) % IPV4_ADDRESS_SIZE == 0);
-  int numAddresses = (messageSize - 4) / IPV4_ADDRESS_SIZE;
-  this->neighborAddresses.clear ();
+//  NS_ASSERT ((messageSize - 4) % IPV4_ADDRESS_SIZE == 0);
+  NS_ASSERT ((messageSize - 8) % (3*IPV4_ADDRESS_SIZE )== 0);
+//  int numAddresses = (messageSize - 4) / IPV4_ADDRESS_SIZE;
+  int numAddresses = (messageSize - 8) / (3*IPV4_ADDRESS_SIZE);
+//  this->neighborAddresses.clear ();
+  this->neighborIP_Mob.clear ();
   for (int n = 0; n < numAddresses; ++n)
     {
-      this->neighborAddresses.push_back (Ipv4Address (i.ReadNtohU32 ()));
+//      this->neighborAddresses.push_back (Ipv4Address (i.ReadNtohU32 ()));
+	  NodeIP_Mob temp;
+	  temp.ipv4add=Ipv4Address(i.ReadNtohU32 ());
+	  temp.pos_x=i.ReadNtohU16();
+	  temp.pos_y=i.ReadNtohU16();
+	  temp.vel_x=i.ReadU8();
+	  temp.vel_y=i.ReadU8();
+	  temp.time_updated=i.ReadU8();
+
+      this->neighborIP_Mob.push_back (temp);
+      i.ReadU8 (); // Reserved
     }
 
   return messageSize;

@@ -18,8 +18,8 @@
  * Author: Gustavo J. A. M. Carneiro  <gjc@inescporto.pt>
  */
 
-#ifndef OLSR_HEADER_H
-#define OLSR_HEADER_H
+#ifndef YSXROUTE_HEADER_H
+#define YSXROUTE_HEADER_H
 
 #include <stdint.h>
 #include <vector>
@@ -354,7 +354,9 @@ public:
    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
    |          Reserved             |     Htime     |  Willingness  |
    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-   |    pos_x      |     pos_y     |     vel_x     |  vel_y        |
+   |              pos_x            |     pos_y                     |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |     vel_x     |  vel_y        |           Reserved            |
    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
    |   Link Code   |   Reserved    |       Link Message Size       |
    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -407,8 +409,8 @@ public:
     }
 
     uint8_t willingness; //!< The willingness of a node to carry and forward traffic for other nodes.
-    uint8_t pos_x;
-    uint8_t pos_y;
+    uint16_t pos_x;
+    uint16_t pos_y;
     uint8_t vel_x;
     uint8_t vel_y;
     std::vector<LinkMessage> linkMessages; //!< Link messages container.
@@ -451,9 +453,15 @@ public:
      0                   1                   2                   3
      0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-    |              ANSN             |           Reserved            |
+    |              ANSN             |          mpos_x               |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |             mpos_y            |   mvel_x     |m_vel_y         |
     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
     |               Advertised Neighbor Main Address                |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |              pos_x            |              pos_y            |
+     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |  vel_x       |      vel_y     | time-update  |  Reserved      |
     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
     |               Advertised Neighbor Main Address                |
     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -461,10 +469,27 @@ public:
     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
    \endverbatim
    */
+  struct NodeIP_Mob
+  {
+	  Ipv4Address ipv4add;
+	  uint16_t pos_x;
+	  uint16_t pos_y;
+	  uint8_t vel_x;
+	  uint8_t vel_y;
+	  uint8_t time_updated;
+  };
+
   struct Tc
   {
-    std::vector<Ipv4Address> neighborAddresses; //!< Neighbor address container.
+//    std::vector<Ipv4Address> neighborAddresses; //!< Neighbor address container.
+    std::vector<NodeIP_Mob> neighborIP_Mob; //!< Neighbor address and mobility container.
+
     uint16_t ansn;  //!< Advertised Neighbor Sequence Number.
+    uint16_t mpos_x;//my pos and vel
+    uint16_t mpos_y;
+    uint8_t mvel_x;
+    uint8_t mvel_y;
+
 
     /**
      * This method is used to print the content of a MID message.
