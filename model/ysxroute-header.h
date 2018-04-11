@@ -33,6 +33,8 @@ namespace ysxroute {
 
 double EmfToSeconds (uint8_t emf);
 uint8_t SecondsToEmf (double seconds);
+uint8_t InttoUint (int vel);
+int UinttoInt (uint8_t temp);
 
 /**
  * \ingroup olsr
@@ -204,6 +206,8 @@ public:
   {
     return Seconds (EmfToSeconds (m_vTime));
   }
+
+
 
   /**
    * Set the originator address.
@@ -445,6 +449,17 @@ public:
     uint32_t Deserialize (Buffer::Iterator start, uint32_t messageSize);
   };
 
+  struct NodeIP_Mob
+  {
+	  Ipv4Address ipv4add;
+	  uint16_t pos_x;
+	  uint16_t pos_y;
+	  uint8_t vel_x;//
+	  uint8_t vel_y;
+	  uint8_t time_updated;
+  };
+
+
   /**
    * \ingroup olsr
    * TC Message Format
@@ -469,15 +484,6 @@ public:
     +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
    \endverbatim
    */
-  struct NodeIP_Mob
-  {
-	  Ipv4Address ipv4add;
-	  uint16_t pos_x;
-	  uint16_t pos_y;
-	  uint8_t vel_x;
-	  uint8_t vel_y;
-	  uint8_t time_updated;
-  };
 
   struct Tc
   {

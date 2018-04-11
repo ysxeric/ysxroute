@@ -27,6 +27,7 @@
 ///
 
 #include "ysx-state.h"
+#include "ns3/simulator.h"
 
 
 namespace ns3 {
@@ -95,10 +96,17 @@ OlsrState::PrintMprSelectorSet () const
     {
       MprSelectorSet::const_iterator next = iter;
       next++;
-      os << iter->mainAddr;
+      os << "IP"<<iter->mainAddr;
+      os << ",pos x"<<iter->pos_x;
+      os << ",pos_y"<<iter->pos_y;
+      os << ",vel_x"<<iter->vel_x;
+      os << ",vel_y"<<iter->vel_y;
+      os << ",time updated"<<iter->timeupdated;
+//      Time now = Simulator::Now ();
+//      os<<now.GetMilliSeconds();
       if (next != m_mprSelectorSet.end ())
         {
-          os << ", ";
+          os << std::endl;
         }
     }
   os << "]";

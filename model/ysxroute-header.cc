@@ -96,6 +96,38 @@ EmfToSeconds (uint8_t olsrFormat)
   return OLSR_C * (1 + a / 16.0) * (1 << b);
 }
 
+uint8_t
+InttoUint(int vel)
+{
+	uint8_t temp;
+	NS_ASSERT(vel<=127 && vel>=-127);
+	if(vel>=0)
+	{
+		temp=vel;
+		return temp;
+	}
+	else
+	{
+		temp=128-vel;
+		return temp;
+	}
+}
+
+int
+UinttoInt(uint8_t tmp)
+{
+	int vel;
+	if(tmp>128)
+	{
+		vel=-(tmp-128);
+	}
+	else
+	{
+		vel=tmp;
+	}
+	return vel;
+}
+
 
 
 // ---------------- OLSR Packet -------------------------------

@@ -113,11 +113,11 @@ struct NeighborTuple
   uint8_t willingness;
   //Neighbor's position and velocity  and the time it recvs this information
 
-  uint8_t time_cur;//pos and vel and the time it is updated
+  Time time_cur;//pos and vel and the time it is updated
   uint16_t pos_x;
   uint16_t pos_y;
-  uint8_t vel_x;
-  uint8_t vel_y;
+  int  vel_x;
+  int  vel_y;
 };
 
 static inline bool
@@ -182,11 +182,13 @@ struct MprSelectorTuple
   Ipv4Address mainAddr;
   uint16_t pos_x;
   uint16_t pos_y;
-  uint8_t vel_x;
-  uint8_t vel_y;
-  uint8_t timeupdated;
+  int vel_x;
+  int vel_y;
+  Time timeupdated;
+
   /// Time at which this tuple expires and must be removed.
   Time expirationTime; // previously called 'time_'
+
 };
 
 static inline bool
@@ -232,9 +234,9 @@ struct Node_id_mob
 	Ipv4Address ipv4;
 	uint16_t pos_x;
 	uint16_t pos_y;
-	uint8_t vel_x;
-	uint8_t vel_y;
-	uint8_t time;
+	int vel_x;
+	int vel_y;
+	Time time;
 
 };
 static inline bool
@@ -252,7 +254,7 @@ operator << (std::ostream &os, const Node_id_mob& n1)
 {
 	os<<"IP: "<<n1.ipv4
 			<<" Pos: "<<n1.pos_x<<" ,"<<n1.pos_y
-			<<"vel: "<<n1.vel_x<<" , "<<n1.vel_y
+			<<" vel: "<<n1.vel_x<<" , "<<n1.vel_y
 			<<" updatetime: "<<n1.time<<std::endl;
 	return os;
 }

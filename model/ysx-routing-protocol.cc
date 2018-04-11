@@ -243,6 +243,7 @@ void RoutingProtocol::DoDispose ()
   m_hnaRoutingTable = 0;
   m_routingTableAssociation = 0;
 
+
   if (m_recvSocket)
     {
       m_recvSocket->Close ();
@@ -1284,7 +1285,7 @@ RoutingProtocol::ProcessHello (const ysxroute::MessageHeader &msg,
 #ifdef NS3_LOG_ENABLE
   {
     const LinkSet &links = m_state.GetLinks ();
-    NS_LOG_DEBUG (Simulator::Now ().GetSeconds ()
+    NS_LOG_DEBUG(Simulator::Now ().GetSeconds ()
                   << "s ** BEGIN dump Link Set for OLSR Node " << m_mainAddress);
     for (LinkSet::const_iterator link = links.begin (); link != links.end (); link++)
       {
@@ -1299,7 +1300,7 @@ RoutingProtocol::ProcessHello (const ysxroute::MessageHeader &msg,
       {
         NS_LOG_DEBUG (*neighbor);
       }
-    NS_LOG_DEBUG ("** END dump Neighbor Set for OLSR Node " << m_mainAddress);
+    NS_LOG_DEBUG("** END dump Neighbor Set for OLSR Node " << m_mainAddress);
   }
 #endif // NS3_LOG_ENABLE
 
@@ -1377,6 +1378,20 @@ RoutingProtocol::ProcessTc (const ysxroute::MessageHeader &msg,
       if (topologyTuple != NULL)
         {
           topologyTuple->expirationTime = now + msg.GetVTime ();
+          topologyTuple->destNode.pos_x = i->pos_x;
+          topologyTuple->destNode.pos_y=i->pos_y;
+          topologyTuple->destNode.vel_x=UinttoInt(i->vel_x);
+          topologyTuple->destNode.vel_y=UinttoInt(i->vel_y);
+          topologyTuple->destNode.time=Seconds(EmfToSeconds(i->time_updated));//zhe li double zhuan hua wei time
+
+
+          topologyTuple->lastNode.pos_x=tc.mpos_x;
+          topologyTuple->lastNode.pos_y=tc.mpos_y;
+          topologyTuple->lastNode.vel_x=UinttoInt(tc.mvel_x);
+          topologyTuple->lastNode.vel_y=UinttoInt(tc.mvel_y);
+          topologyTuple->lastNode.time=Simulator::Now();
+          topologyTuple->sequenceNumber = tc.ansn;
+
         }
       else
         {
@@ -1388,9 +1403,18 @@ RoutingProtocol::ProcessTc (const ysxroute::MessageHeader &msg,
           //      T_time      = current time + validity time.
           TopologyTuple topologyTuple;
           topologyTuple.destNode.ipv4 = addr;
-          topologyTuple.lastNode.ipv4 = msg.GetOriginatorAddress ();
           topologyTuple.destNode.pos_x = i->pos_x;
           topologyTuple.destNode.pos_y=i->pos_y;
+          topologyTuple.destNode.vel_x=UinttoInt(i->vel_x);
+          topologyTuple.destNode.vel_y=UinttoInt(i->vel_y);
+          topologyTuple.destNode.time=Seconds(EmfToSeconds(i->time_updated));//zhe li double zhuan hua wei time
+
+          topologyTuple.lastNode.ipv4 = msg.GetOriginatorAddress ();
+          topologyTuple.lastNode.pos_x=tc.mpos_x;
+          topologyTuple.lastNode.pos_y=tc.mpos_y;
+          topologyTuple.lastNode.vel_x=UinttoInt(tc.mvel_x);
+          topologyTuple.lastNode.vel_y=UinttoInt(tc.mvel_y);
+          topologyTuple.lastNode.time=Simulator::Now();
           topologyTuple.sequenceNumber = tc.ansn;
           topologyTuple.expirationTime = now + msg.GetVTime ();
           AddTopologyTuple (topologyTuple);
@@ -1407,14 +1431,14 @@ RoutingProtocol::ProcessTc (const ysxroute::MessageHeader &msg,
 #ifdef NS3_LOG_ENABLE
   {
     const TopologySet &topology = m_state.GetTopologySet ();
-    NS_LOG_DEBUG (Simulator::Now ().GetSeconds ()
+    NS_LOG_UNCOND (Simulator::Now ().GetSeconds ()
                   << "s ** BEGIN dump TopologySet for OLSR Node " << m_mainAddress);
     for (TopologySet::const_iterator tuple = topology.begin ();
          tuple != topology.end (); tuple++)
       {
-        NS_LOG_DEBUG (*tuple);
+        NS_LOG_UNCOND(*tuple);
       }
-    NS_LOG_DEBUG ("** END dump TopologySet Set for OLSR Node " << m_mainAddress);
+    NS_LOG_UNCOND ("** END dump TopologySet Set for OLSR Node " << m_mainAddress);
   }
 #endif // NS3_LOG_ENABLE
 }
@@ -1712,8 +1736,13 @@ RoutingProtocol::SendHello ()
   hello.pos_x=uint16_t(pos.x);
   hello.pos_y=uint16_t(pos.y);
   Vector vel = mo->GetVelocity();
-  hello.vel_x=uint8_t(vel.x);
-  hello.vel_y=uint8_t(vel.y);
+  int tempx=ceil(vel.x+0.5)-1;//si she wu ru
+  int tempy=ceil(vel.y+0.5)-1;//si she wu ru
+  hello.vel_x=InttoUint(tempx);
+  hello.vel_y=InttoUint(tempy);
+
+//  NS_LOG_UNCOND("IP:"<<m_mainAddress<<",pos:"<<hello.pos_x<<","<<hello.pos_y<<"velx: "
+//		  <<UinttoInt(hello.vel_x)<<",vel_y:"<<UinttoInt(hello.vel_y)<<std::endl);
 
   std::vector<ysxroute::MessageHeader::Hello::LinkMessage>
   &linkMessages = hello.linkMessages;
@@ -1825,8 +1854,10 @@ RoutingProtocol::SendTc ()
    tc.mpos_x=uint16_t(pos.x);
    tc.mpos_y=uint16_t(pos.y);
    Vector vel = mob->GetVelocity();
-   tc.mvel_x=uint8_t(vel.x);
-   tc.mvel_y=uint8_t(vel.y);
+   int tempx=ceil(vel.x+0.5)-1;
+   int tempy=ceil(vel.y+0.5)-1;
+   tc.mvel_x=InttoUint(tempx);
+   tc.mvel_y=InttoUint(tempy);
 
   for (MprSelectorSet::const_iterator mprsel_tuple = m_state.GetMprSelectors ().begin ();
        mprsel_tuple != m_state.GetMprSelectors ().end (); mprsel_tuple++)
@@ -1836,9 +1867,9 @@ RoutingProtocol::SendTc ()
 	  temp.ipv4add=mprsel_tuple->mainAddr;
 	  temp.pos_x=mprsel_tuple->pos_x;
 	  temp.pos_y=mprsel_tuple->pos_y;
-	  temp.vel_x=mprsel_tuple->vel_x;
-	  temp.vel_y=mprsel_tuple->vel_y;
-	  temp.time_updated=mprsel_tuple->timeupdated;
+	  temp.vel_x=InttoUint(mprsel_tuple->vel_x);
+	  temp.vel_y=InttoUint(mprsel_tuple->vel_y);
+	  temp.time_updated=SecondsToEmf(mprsel_tuple->timeupdated.GetSeconds());
 
 	  tc.neighborIP_Mob.push_back(temp);
     }
@@ -2162,11 +2193,11 @@ RoutingProtocol::PopulateNeighborSet (const ysxroute::MessageHeader &msg,
     {
       nb_tuple->willingness = hello.willingness;
       //yangshixin modified
-      nb_tuple->time_cur=uint8_t(Simulator::Now().GetSeconds());
-      nb_tuple->pos_x = hello.pos_x;
+      nb_tuple->time_cur=Simulator::Now();
+      nb_tuple->pos_x=hello.pos_x;
       nb_tuple->pos_y = hello.pos_y;
-      nb_tuple->vel_x= hello.vel_x;
-      nb_tuple->vel_y= hello.vel_y;
+      nb_tuple->vel_x= UinttoInt(hello.vel_x);
+      nb_tuple->vel_y= UinttoInt(hello.vel_y);
     }
 }
 
@@ -2312,6 +2343,12 @@ RoutingProtocol::PopulateMprSelectorSet (const ysxroute::MessageHeader &msg,
                       MprSelectorTuple mprsel_tuple;
 
                       mprsel_tuple.mainAddr = msg.GetOriginatorAddress ();
+                      mprsel_tuple.pos_x = hello.pos_x;
+                      mprsel_tuple.pos_y = hello.pos_y;
+                      mprsel_tuple.vel_x = UinttoInt(hello.vel_x);
+                      mprsel_tuple.vel_y = UinttoInt(hello.vel_y);
+
+                      mprsel_tuple.timeupdated = now;
                       mprsel_tuple.expirationTime = now + msg.GetVTime ();
                       AddMprSelectorTuple (mprsel_tuple);
 
@@ -2324,12 +2361,17 @@ RoutingProtocol::PopulateMprSelectorSet (const ysxroute::MessageHeader &msg,
                   else
                     {
                       existing_mprsel_tuple->expirationTime = now + msg.GetVTime ();
+                      existing_mprsel_tuple->pos_x=hello.pos_x;
+                      existing_mprsel_tuple->pos_y=hello.pos_y;
+                      existing_mprsel_tuple->vel_x=UinttoInt(hello.vel_x);
+                      existing_mprsel_tuple->vel_y=UinttoInt(hello.vel_y);
+                      existing_mprsel_tuple->timeupdated=now;
                     }
                 }
             }
         }
     }
-  NS_LOG_DEBUG ("Computed MPR selector set for node " << m_mainAddress << ": " << m_state.PrintMprSelectorSet ());
+  NS_LOG_DEBUG("Computed MPR selector set for node " << m_mainAddress << ": " << m_state.PrintMprSelectorSet ());
 }
 
 
